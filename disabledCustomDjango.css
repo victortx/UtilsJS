@@ -1,0 +1,6 @@
+.disabled-custom {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: .7;
+    background: #E1E6EB;
+}
