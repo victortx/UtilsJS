@@ -2,8 +2,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 
-export function reportFunction(data: any) {
-  console.log(data);
+export function reportFunction(data: any = []) {
   // Create object render
   const doc = new jsPDF();
   // Construyendo el cuerpo del pdf
@@ -63,7 +62,7 @@ export function reportFunction(data: any) {
     showFoot: false,
     margin: {left: 10, top: 10},
     tableLineColor: [0, 0, 0],
-    tableLineWidth: 0.5,
+    tableLineWidth: 0.3,
     rowPageBreak: 'auto',
   });
   // Segunda tabla
@@ -79,10 +78,10 @@ export function reportFunction(data: any) {
   ];
   // body de la segunda tabla
   const dataTwoTable = [
-    ['Clave:', '50617121900310173735400100001040000002981153358448', 'Consecutivo:', '00100001040000002981'],
+    ['Clave:', data.Factura.clave, 'Consecutivo:', data.Factura.consecutivo],
     ['Referencia PV:', '000000007392', 'Fecha:', '17/12/2019 16:45:12'],
-    ['Código Moneda:', 'CRC', 'Tipo Cambio:', '584.00'],
-    ['Medio de Pago:', 'Efectivo', 'Condición Venta:', 'Contado']
+    ['Código Moneda:', data.Factura.idMoneda, 'Tipo Cambio:', data.Factura.FormasPago[0].tipoCambio],
+    ['Medio de Pago:', data.Factura.FormasPago[0].tipoPagoNombre, 'Condición Venta:', 'Contado']
   ];
   // data de la segunda tabla
   doc.autoTable({
@@ -92,7 +91,7 @@ export function reportFunction(data: any) {
     rowPageBreak: 'auto',
     theme: 'plain',
     tableLineColor: [0, 0, 0],
-    tableLineWidth: 0.5,
+    tableLineWidth: 0.3,
     bodyStyles: { valign: 'top', fontSize: 8},
     // size the table
     tableWidth: 190,
@@ -125,7 +124,7 @@ export function reportFunction(data: any) {
     rowPageBreak: 'auto',
     theme: 'plain',
     tableLineColor: [0, 0, 0],
-    tableLineWidth: 0.5,
+    tableLineWidth: 0.3,
     bodyStyles: { valign: 'top', fontSize: 8},
     // size the table
     showHead: false,
@@ -137,9 +136,49 @@ export function reportFunction(data: any) {
       1: {columnWidth: 'auto'},
       2: {fontStyle: 'bold', halign: 'right', columnWidth: 35}},
   });
-
-
-
+  // Reder cuarta tabla
+  const headCuartaTabla = [['Cant.', 'Código', 'Descripción', 'Precio Unit.', 'Total']];
+  // const bodyCuartaTabla = [
+  //   [1.00, 'SERV1X24', 7.526, 'SERVILLETA CUSCATLECA', '¢275.22', '¢275.22']
+  // ];
+  const bodyCuartaTabla = [];
+  data.Factura.Detalles.forEach(  x => bodyCuartaTabla.push([x.cantidad.toFixed(2),
+    x.codigoArticulo, x.nombreArticulo, dataCurrency(x.subTotal), dataCurrency(x.montoTotal)]));
+  const totalPagesExp = '{total_pages_count_string}';
+  doc.autoTable({
+    head: headCuartaTabla,
+    body: bodyCuartaTabla,
+    headStyles: {
+      fillColor: [232, 232, 232],
+      lineColor: [0, 0, 0],
+      lineWidth: 0.3,
+    },
+    theme: 'plain',
+    tableLineColor: [0, 0, 0],
+    tableLineWidth: 0.3,
+    startY: doc.previousAutoTable.finalY,
+    tableWidth: 190,
+    // Funcion de paginacion de la tabla
+    didDrawPage: function(data) {
+    // Footer de la hoja para la posision
+    let str = 'página ' + doc.internal.getNumberOfPages();
+    // Calculando el Total de hojas
+    if (typeof doc.putTotalPages === 'function') {
+      str = str + ' de ' + totalPagesExp;
+    }
+    // Estableciendo el size de la letra
+    doc.setFontSize(10);
+    // jsPDF 1.4+ uses getWidth, <1.4 uses .width
+    const pageSize = doc.internal.pageSize;
+    const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+    doc.text(str, data.settings.margin.left + 80, pageHeight - 10);
+    },
+    margin: {left: 10},
+  });
+  // Total numero de paginas
+  if (typeof doc.putTotalPages === 'function') {
+    doc.putTotalPages(totalPagesExp);
+  }
 
   doc.setProperties({
     title: 'reporte de compra'
@@ -151,3 +190,8 @@ export function reportFunction(data: any) {
     newWindow.location.href = doc.output('bloburl');
   };
 }
+// Funcion de moneda
+function dataCurrency(DataCurrency) {
+  const number = new Intl.NumberFormat().format(DataCurrency);
+  return number;
+};
