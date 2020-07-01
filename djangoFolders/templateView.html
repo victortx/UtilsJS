@@ -1,0 +1,32 @@
+<form id="form" method="post" data-url="{% url 'hospitalizacion:datos-admision-admin' pk=object.pk %}" novalidate autocomplete="off">
+    {% csrf_token %}
+    {{ form.motivo_hospitalizacion|as_crispy_field }}
+    <!-- va todo el form que resive el form_valid-->
+</form>
+<!-- #renderizado con cryspy-->
+
+<script type="text/appliaction">
+    //El envio de los datos es con jquery O se puede hacer con cualquier tipo de request
+    $(document).ready(() => {
+        // Guarda todo el form en una variable
+        var form = $("#form");
+        // function request
+        // cuando le hace el submit se ejecuta el request
+        form.submit(function (event){
+            event.preventDefault();
+            var fromData = $(this).serialize(); // Se serializa todo el form 
+            var thisUrl = "{% url 'hospitalizacion:datos-admision-admin' pk=object.pk %}"; // Url del endpoint
+            $.ajax({
+                type: "POST",
+                url: thisUrl,
+                data: fromData, // se envia seriazliada
+                headers: { 'X-CSRFToken': getCookie('csrftoken')}, // Se agrega el token de django
+                success: function (result) {
+                     debugger;
+                     console.log(result);
+                }
+
+            })
+        });
+     });
+</script>
